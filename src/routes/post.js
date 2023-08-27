@@ -1,4 +1,4 @@
-//routes/post.js
+//src/routes/post.js
 
 const express = require('express');
 const router = express.Router();
