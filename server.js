@@ -31,7 +31,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Multer setup for handling file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Define the destination folder for uploaded videos
+    cb(null, 'uploads/'); 
   },
   filename: (req, file, cb) => {
     cb(null, file.originalname); // Use the original filename for the uploaded video
@@ -111,11 +111,66 @@ app.post('/user/login', async (req, res) => {
 
 // Route for starting and stopping video recording
 app.post('/record/start', async (req, res) => {
-  // Implement logic to start recording
+  try {
+    if (isRecording) {
+      return res.status(400).json({ message: 'Recording is already in progress' });
+    }
+
+    // Access the user's camera and microphone
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+
+    // Create a new MediaRecorder instance
+    mediaRecorder = new MediaRecorder(stream);
+
+    // Event handler for dataavailable event (when recording data is available)
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        recordedChunks.push(event.data);
+      }
+    };
+
+    // Start recording
+    mediaRecorder.start();
+    isRecording = true;
+
+    res.status(200).json({ message: 'Recording started' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to start recording', error: error.message });
+  }
 });
 
 app.post('/record/stop', upload.single('video'), async (req, res) => {
-  // Implement logic to stop recording and handle the recorded file
+  try {
+    if (!isRecording) {
+      return res.status(400).json({ message: 'No active recording to stop' });
+    }
+
+    // Stop the MediaRecorder
+    mediaRecorder.stop();
+    isRecording = false;
+
+    // Create a unique filename for the recorded video
+    const filename = `video_${Date.now()}.webm`;
+
+    // Create a write stream to save the recorded video
+    const fileStream = fs.createWriteStream(path.join(__dirname, 'uploads', filename));
+
+    // Write the recorded chunks to the video file
+    recordedChunks.forEach((chunk) => {
+      fileStream.write(chunk);
+    });
+
+    // End the file stream
+    fileStream.end();
+
+    recordedChunks = []; // Clear recorded chunks
+
+    res.status(200).json({ message: 'Recording stopped and saved', videoFilename: filename });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to stop recording', error: error.message });
+  }
 });
 
 // Start the server
