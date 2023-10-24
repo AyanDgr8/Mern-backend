@@ -6,6 +6,9 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const User = require('../models/user');
+const RegisterUser = require('../models/register');
+const SignInUser = require('../models/login');
+
 
 // Route for user registration
 router.post('/register', async (req, res) => {
@@ -61,9 +64,13 @@ router.post('/login', async (req, res) => {
 
         // Create a JWT token for the authenticated user
         const token = jwt.sign(
-            { userId: user._id, email: user.email },
+            { 
+                name: user.name, 
+                email: user.email, 
+                userId: user._id
+            },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' } // You can adjust the expiration time
+            { expiresIn: '1h' } 
         );
 
         res.status(200).json({ token, userId: user._id });

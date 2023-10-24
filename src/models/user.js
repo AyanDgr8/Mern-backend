@@ -1,4 +1,4 @@
-//src/models/user.js
+//src/models/video.js
 
 const mongoose = require('mongoose');
 
@@ -6,8 +6,8 @@ const userSchema = new mongoose.Schema({
     email: { type: String, unique: true, required: true },
     password: { type: String, required: true },
     name: { type: String, required: true },
-    webcamPermission: { type: Boolean, default: false },
-    audioPermission: { type: Boolean, default: false },
+    webcamPermission: { type: Boolean, required: true },
+    audioPermission: { type: Boolean, required: true },
 });
 
 const User = mongoose.model("User", userSchema);
